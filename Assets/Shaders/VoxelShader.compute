@@ -1,0 +1,59 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel ClearBuffer
+
+//AI generated
+struct Voxel
+{
+    float3 pos; //Voxel position
+    float density; //Density 0 inactive, 1 for active
+    float sideLength; //Passing this so stride length is equal
+};
+
+//Buffers
+RWStructuredBuffer<Voxel> voxelBuffer; //Voxel data buffer
+RWStructuredBuffer<int> occupancyBuffer; //Occupancy data for each voxel
+
+// Grid dimensions (passed from the script)
+int groupSizeX;
+int groupSizeY;
+int groupSizeZ;
+
+float3 smokeSourcePos; //Origin of smoke pos
+float growthSpeed; //How fast density of smoke increases
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+    
+    // Calculate the 1D index of the current voxel
+    uint index = id.x + id.y * groupSizeX + id.z * groupSizeX * groupSizeY;
+
+    Voxel voxel = voxelBuffer[index];
+    
+    bool isAlreadyOccupied = occupancyBuffer[index];
+    
+    if (!isAlreadyOccupied)
+    {
+    //Compute the distance of this voxel from the source
+        float3 voxelPos = voxel.pos;
+        float distance = length(voxelPos - smokeSourcePos);
+    
+        float densityChange = saturate(1.0 - (distance / growthSpeed));
+        voxel.density = min(voxel.density + densityChange, 1.0);
+    
+        voxelBuffer[index] = voxel;
+    }
+}
+
+// Buffer clearing kernel
+[numthreads(8, 8, 1)]
+void ClearBuffer(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x + id.y * groupSizeX + id.z * groupSizeX * groupSizeY;
+
+    Voxel voxel = voxelBuffer[index];
+    voxel.density = 0.0; // Reset density
+    voxelBuffer[index] = voxel;
+}

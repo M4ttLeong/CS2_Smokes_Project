@@ -7,7 +7,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     float extentY;
     float extentZ;
     Vector3 origin;
-    Voxel testVoxel = new Voxel(new Vector3(0,0,0), 0.5f);
+    Voxel testVoxel = new Voxel(new Vector3(0,0,0), 1.0f, 0.5f);
     void Start()
     {
         origin = transform.position;
@@ -27,16 +27,6 @@ public class NewMonoBehaviourScript : MonoBehaviour
         extentZ = renderer.bounds.extents.z;
     }
 
-    void OnDrawGizmos()
-    {
-        Debug.Log("OnDrawGizmos called");
-        if (testVoxel != null)
-        {
-            Debug.Log("TestVoxel exists");
-            // Draw the voxel as a red wireframe cube
-            testVoxel.DrawVoxel(Color.red);
-        }
-    }
 
     // Update is called once per frame
     void Update()
@@ -55,6 +45,5 @@ public class NewMonoBehaviourScript : MonoBehaviour
         }
 
         Color line_Color = Color.red;
-        Debug.DrawLine(minXYZ, maxXYZ, line_Color);
     }
 }
