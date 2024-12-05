@@ -4,11 +4,14 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.UIElements;
+using Unity.VisualScripting;
 
 
 public class Voxelizer : MonoBehaviour
 {
     public ComputeShader voxelShader;
+    public GameObject smokePrefab;
+    private List<GameObject> instantiatedSmokeVoxels = new List<GameObject>();
 
     public float growthSpeed = 10.0f;
     public Vector3 smokeSourcePos;
@@ -35,6 +38,8 @@ public class Voxelizer : MonoBehaviour
 
     // This script needs to create a 1D buffer of voxels for my map
     // I suppose I'll just attach this to the floor of the map
+
+    
     void Start()
     {
         voxelList = new List<Voxel>();
@@ -56,6 +61,9 @@ public class Voxelizer : MonoBehaviour
         Vector3 maxXYZ = new Vector3(originPos.x + extentX, originPos.y + extentY, originPos.z + extentZ);
         Vector3 minXYZ = new Vector3(originPos.x - extentX, originPos.y, originPos.z - extentZ);
 
+        Debug.Log("maxXYZ x: " + maxXYZ.x + " y: " + maxXYZ.y + " z: " + maxXYZ.z);
+        Debug.Log("minXYZ x: " + minXYZ.x + " y: " + minXYZ.y + " z: " + minXYZ.z);
+
         gridSizeX = Mathf.CeilToInt((maxXYZ.x - minXYZ.x) / voxelSize);
         gridSizeY = Mathf.CeilToInt((maxXYZ.y - minXYZ.y) / voxelSize);
         gridSizeZ = Mathf.CeilToInt((maxXYZ.z - minXYZ.z) / voxelSize);
@@ -75,6 +83,18 @@ public class Voxelizer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        /*
+        int kernelHandle = voxelShader.FindKernel("CSMain");
+        voxelShader.SetVector("smokeSourcePos", smokeSourcePos);
+
+        voxelShader.Dispatch(kernelHandle,
+            Mathf.CeilToInt(gridSizeX / 8.0f),
+            Mathf.CeilToInt(gridSizeY / 8.0f),
+            Mathf.CeilToInt(gridSizeZ / 1.0f));
+        */
+
+        //drawSmokeVoxels();
+        
         //timer to control when we clear the smoke
         timer += Time.deltaTime;
 
@@ -97,6 +117,8 @@ public class Voxelizer : MonoBehaviour
                         Mathf.CeilToInt(gridSizeZ / 1.0f));
                     smokeOnScreen = true;
                 }
+
+                drawSmokeVoxels();
             }
             
         }
@@ -110,8 +132,10 @@ public class Voxelizer : MonoBehaviour
                 Mathf.CeilToInt(gridSizeZ / 1.0f));
             timer = 0.0f;
             smokeOnScreen = false;
+
+            removeSmokeVoxels();
         }
-        
+
     }
 
     void FillAABBWithVoxels(Vector3 maxXYZ, Vector3 minXYZ, int gridSize)
@@ -189,6 +213,81 @@ public class Voxelizer : MonoBehaviour
         return colliders.Length > 0;
     }
 
+    void drawSmokeVoxels()
+    {
+        if (voxelList != null && voxelBuffer != null)
+        {
+            Voxel[] voxels = new Voxel[voxelList.Count];
+            voxelBuffer.GetData(voxels);
+            foreach (Voxel v in voxels)
+            {
+                //instantiate a new voxelPrefab, give it a random color
+                if (v.density > 0.001f)
+                {
+                    GameObject smokeVoxel = Instantiate(smokePrefab, v.position, Quaternion.identity);
+                    smokeVoxel.transform.localScale = Vector3.one * v.sideLength;
+                    Renderer renderer = smokeVoxel.GetComponent<Renderer>();
+                    if(renderer != null)
+                    {
+                        renderer.material.color = new Color(Random.value, Random.value, Random.value);
+                    }
+
+                    instantiatedSmokeVoxels.Add(smokeVoxel);
+                }
+            }
+        }
+    }
+
+    void removeSmokeVoxels()
+    {
+        foreach(GameObject smokeVoxel in instantiatedSmokeVoxels)
+        {
+            Destroy(smokeVoxel);
+        }
+        instantiatedSmokeVoxels.Clear();
+    }
+
+    public ComputeBuffer GetVoxelBuffer()
+    {
+        return this.voxelBuffer;
+    }
+
+    public Vector3 GetGridSize()
+    {
+        return new Vector3(this.gridSizeX, this.gridSizeY, this.gridSizeZ);
+    }
+
+    public float GetVoxelDensityAtPosition(Vector3 position)
+    {
+        // Calculate the minimum corner of the voxel grid in world space
+        Vector3 minXYZ = new Vector3(-gridSizeX / 2.0f * voxelSize, 0, -gridSizeZ / 2.0f * voxelSize);
+
+        // Shift the input position into the voxel grid's coordinate system
+        Vector3 shiftedPos = position - minXYZ;
+
+        // Convert world-space position to voxel indices
+        int x = Mathf.FloorToInt(shiftedPos.x / voxelSize);
+        int y = Mathf.FloorToInt(shiftedPos.y / voxelSize);
+        int z = Mathf.FloorToInt(shiftedPos.z / voxelSize);
+
+        // Bounds check
+        if (x < 0 || y < 0 || z < 0 || x >= gridSizeX || y >= gridSizeY || z >= gridSizeZ)
+        {
+            return 0.0f; // Out of bounds
+        }
+
+        // Calculate the 1D index of the voxel in the buffer
+        int index = x * (gridSizeY * gridSizeZ) + y * gridSizeZ + z;
+
+        // Create a managed array to hold voxel buffer data
+        float[] voxelData = new float[voxelBuffer.count * 5];
+
+        // Copy data from GPU buffer to CPU
+        voxelBuffer.GetData(voxelData);
+
+        // Return the density of the voxel (4th float in each 5-float block)
+        return voxelData[index * 5 + 3];
+    }
     void OnDrawGizmos()
     {
         if (voxelList != null && voxelBuffer != null)
@@ -197,6 +296,7 @@ public class Voxelizer : MonoBehaviour
             voxelBuffer.GetData(voxels);
             foreach(Voxel v in voxels)
             {
+                //Set v.density to 1.0 if you want to see the whole AABB
                 v.DrawVoxel(Color.red, v.density);
             }
         }

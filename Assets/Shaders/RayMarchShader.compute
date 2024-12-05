@@ -1,0 +1,115 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Create a RenderTexture with enableRandomWrite flag and set it
+// with cs.SetTexture
+StructuredBuffer<float> _VoxelBuffer;
+RWTexture2D<float4> _RaymarchOutput;
+
+Texture2D<float> _SceneDepthTexture;
+SamplerState sampler_Depth;
+
+int _OutputWidth;
+int _OutputHeight;
+
+// Voxel grid parameters
+int _GridSizeX, _GridSizeY, _GridSizeZ;
+float _VoxelSize;
+
+// Camera parameters
+float3 _CameraWorldPos;
+float4x4 _CameraInvViewProjection;
+
+// Raymarching settings
+float _StepSize;
+int _MaxSteps;
+
+// Smoke properties
+float4 _SmokeColor;
+float _DensityFalloff;
+
+
+
+float SampleVoxelDensity(float3 pos)
+{
+    float3 minXYZ = float3(-1 * _GridSizeX / 4, 0, -1 * _GridSizeZ / 4);
+    float3 shiftedPos = pos - minXYZ;
+    int3 gridPos = floor(shiftedPos / _VoxelSize);
+    
+
+    if (gridPos.x < 0 || gridPos.y < 0 || gridPos.z < 0 ||
+        gridPos.x >= _GridSizeX || gridPos.y >= _GridSizeY || gridPos.z >= _GridSizeZ)
+    {
+        return 0.0; // Out of bounds
+    }
+    
+    int index = gridPos.x * (_GridSizeY * _GridSizeZ) + gridPos.y * _GridSizeZ + gridPos.z;
+
+    return _VoxelBuffer[index * 5 + 3]; //Access the 4th float of the buffer DENSITY
+    //return 1.0;
+}
+
+//Method is only to test that a texture can be written back
+float rand(float2 co)
+{
+    return frac(sin(dot(co, float2(12.9898, 78.233))) * 43758.5453);
+}
+
+[numthreads(8, 8, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // TODO: insert actual code here!
+
+    // Get screen-space UV coordinates, normalized position of pixel on the screen
+    float2 uv = id.xy / float2(_OutputWidth, _OutputHeight);
+
+    // Create a ray for the current pixel
+    float4 clipPos = float4(uv * 2 - 1, 1, 1);
+    float4 worldPos = mul(_CameraInvViewProjection, clipPos);
+    //This killed me and I have no idea why
+    worldPos /= worldPos.w; // Perspective divide
+    float3 rayDir = normalize(worldPos.xyz - _CameraWorldPos);
+    
+    
+    // Initialize raymarching variables
+    float3 rayPos = _CameraWorldPos;
+    float3 color = float3(0.0, 0.0, 0.0); // Default black color
+    float density = 0.0;
+
+    for (int step = 0; step < _MaxSteps; step++)
+    {
+        // Move along the ray
+        rayPos += rayDir * _StepSize;
+        
+
+        // Sample voxel density
+        float voxelDensity = SampleVoxelDensity(rayPos);
+        
+        if (voxelDensity > 0.0)
+        {
+            _RaymarchOutput[id.xy] = float4(1.0, 1.0, 1.0, 1.0); // White color for a hit
+            return; // Exit the loop and shader
+        }
+        
+        /*
+        float voxelDensity = SampleVoxelDensity(rayPos);
+
+        // Accumulate density and color
+        density += voxelDensity * exp(-_DensityFalloff * length(rayPos - _CameraWorldPos));
+        color += voxelDensity * _SmokeColor.rgb;
+
+        // Early exit for high opacity
+        if (density > 1.0)
+        {
+            break;
+        }*/
+    }
+
+    _RaymarchOutput[id.xy] = float4(color, 0.0);
+    // Write the final color and opacity to the output
+    //_RaymarchOutput[id.xy] = float4(color, saturate(density));
+    
+    //TEST LINE TO CHECK RAYMARCH OUTPUT TEXTURE
+    //_RaymarchOutput[id.xy] = float4(rand(id.xy), rand(id.xy + 1), rand(id.xy + 2), 1.0);
+
+}

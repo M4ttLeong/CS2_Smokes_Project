@@ -158,6 +158,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -232,8 +233,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.107989, y: 0.09094439, z: -0.00937116, w: 0.9899393}
-  m_LocalPosition: {x: 6.354147, y: 2.9825644, z: -13.951096}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 6, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -283,6 +284,25 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c19db9d41737f459d19680caaccb43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  raymarchShader: {fileID: 7200000, guid: 5a82d7a9f3fb93b4c9163f84d33ffa13, type: 3}
+  voxelizer: {fileID: 2071318226}
+  smokeColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  stepSize: 0.25
+  maxSteps: 128
+  densityFalloff: 0.5
+  logInterval: 3
 --- !u!1001 &388794648
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -331,6 +351,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 13a5325de499b2144aa5536711670375, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: 13a5325de499b2144aa5536711670375, type: 3}
       propertyPath: m_Name
       value: Box_01 (1)
@@ -512,6 +536,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: dce20edaeaf31dc498c64aa9fdb88f32, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: dce20edaeaf31dc498c64aa9fdb88f32, type: 3}
       propertyPath: m_Name
       value: Jug_03
@@ -569,6 +597,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: ff5dde6e18e34e84aa2ee62753f0e68c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: ff5dde6e18e34e84aa2ee62753f0e68c, type: 3}
       propertyPath: m_Name
       value: Jug_01
@@ -679,6 +711,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 37b939c70597dd547a53cbac7471a4eb, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: 37b939c70597dd547a53cbac7471a4eb, type: 3}
       propertyPath: m_Name
       value: Pallet_01
@@ -751,7 +787,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a3192a6b44adb434fbaadb116cf96428, type: 2}
+  - {fileID: 2100000, guid: 6865834b2f6d80240ad723e0c281cbb1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -844,6 +880,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: ff5dde6e18e34e84aa2ee62753f0e68c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: ff5dde6e18e34e84aa2ee62753f0e68c, type: 3}
       propertyPath: m_Name
       value: Jug_01 (1)
@@ -985,7 +1025,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 76ce8fd5e430c3248bb344f415e3ed45, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 4f1ef37ae953c484bbc5d5e4049147e5, type: 2}
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: 76ce8fd5e430c3248bb344f415e3ed45, type: 3}
       propertyPath: m_Name
       value: Market_02
@@ -1050,6 +1090,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PalmTree_01
       objectReference: {fileID: 0}
+    - target: {fileID: 2122311100979609544, guid: 64ff8cb21b968504580254dd90a60ba1, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1136,7 +1180,7 @@ PrefabInstance:
     - target: {fileID: -7511558181221131132, guid: 9e7e40997ce91424abaf73900c1584d9, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
-      objectReference: {fileID: 2100000, guid: 4f1ef37ae953c484bbc5d5e4049147e5, type: 2}
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: 9e7e40997ce91424abaf73900c1584d9, type: 3}
       propertyPath: m_Name
       value: House_04R
@@ -1197,6 +1241,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 13a5325de499b2144aa5536711670375, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: 13a5325de499b2144aa5536711670375, type: 3}
       propertyPath: m_Name
       value: Box_01
@@ -1284,6 +1332,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: b4d2e0ffaa86e1440bb052934c87e3ad, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     - target: {fileID: 919132149155446097, guid: b4d2e0ffaa86e1440bb052934c87e3ad, type: 3}
       propertyPath: m_Name
       value: Jug_02
@@ -1356,7 +1408,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f96821bbefeea864b9b418af4b8615ac, type: 2}
+  - {fileID: 2100000, guid: 6865834b2f6d80240ad723e0c281cbb1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1453,6 +1505,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PalmTree_02
       objectReference: {fileID: 0}
+    - target: {fileID: 3224728697718443852, guid: 8e648fc4c3487f44abe65e5095ec3d60, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6fb4cad7ffa77fe4fbe46404527fafeb, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1527,7 +1583,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 761d8e1f988ed2345a28312145c79c6e, type: 2}
+  - {fileID: 2100000, guid: 6865834b2f6d80240ad723e0c281cbb1, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1597,6 +1653,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   voxelShader: {fileID: 7200000, guid: 5d24e1a4b6781d14685e74f25f113d6e, type: 3}
+  smokePrefab: {fileID: 3616718126337751679, guid: 84f4710c2cf066140b1ce4a39517fcca, type: 3}
   growthSpeed: 2
   smokeSourcePos: {x: 0, y: 0, z: 0}
   extentY: 8
