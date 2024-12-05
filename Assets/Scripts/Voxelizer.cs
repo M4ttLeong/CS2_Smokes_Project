@@ -39,6 +39,10 @@ public class Voxelizer : MonoBehaviour
     // This script needs to create a 1D buffer of voxels for my map
     // I suppose I'll just attach this to the floor of the map
 
+
+    //For debugging gunshot
+    Vector3 start = new Vector3(10,0,0);
+    Vector3 end = new Vector3 (-10,0,0);
     
     void Start()
     {
@@ -123,7 +127,19 @@ public class Voxelizer : MonoBehaviour
             
         }
 
-        if(timer >= smokeDisipationTimer) 
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (smokeOnScreen)
+            {
+                //Simulate gun shot to break up the volume. 
+                FireRayAndClearVoxels();
+            }
+        }
+
+        Debug.Log("drawing line");
+        Debug.DrawLine(start, end, Color.red);
+
+        if (timer >= smokeDisipationTimer) 
         {
             int clearKernelHandle = voxelShader.FindKernel("ClearBuffer");
             voxelShader.Dispatch(clearKernelHandle,
@@ -246,6 +262,160 @@ public class Voxelizer : MonoBehaviour
         }
         instantiatedSmokeVoxels.Clear();
     }
+
+    void FireRayAndClearVoxels()
+    {
+        Debug.Log("Got here");
+        //CPU side computation of 1 ray
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+        Vector3 maxXYZ = new Vector3(originPos.x + extentX, originPos.y + extentY, originPos.z + extentZ);
+        Vector3 minXYZ = new Vector3(originPos.x - extentX, originPos.y, originPos.z - extentZ);
+
+        float tMin, tMax;
+        if (!RayBoxIntersection(ray.origin, ray.direction, minXYZ, maxXYZ, out tMin, out tMax))
+        {
+            // No intersection with the voxel grid bounding box
+            Debug.Log("Didn't hit the box");
+            return;
+        } else
+        {
+            Debug.Log("Hit the AABB");
+        }
+
+        start = ray.origin + ray.direction * tMin;
+        end = ray.origin + ray.direction * tMax;
+
+        
+
+        Voxel[] voxels = new Voxel[voxelBuffer.count];
+        voxelBuffer.GetData(voxels);
+
+        ClearVoxelsAlongRay(start, end, voxels);
+        voxelBuffer.SetData(voxels);
+    }
+
+    //AI generated function
+    void ClearVoxelsAlongRay(Vector3 start, Vector3 end, Voxel[] voxels)
+    {
+        // Convert start/end world positions to voxel coordinates
+        // Grid origin is at minXYZ + voxelSize/2 offset per voxel
+        Vector3 gridMin = new Vector3(originPos.x - extentX, originPos.y, originPos.z - extentZ);
+
+        Vector3 startShifted = start - gridMin;
+        Vector3 endShifted = end - gridMin;
+
+        int startX = Mathf.FloorToInt(startShifted.x / voxelSize);
+        int startY = Mathf.FloorToInt(startShifted.y / voxelSize);
+        int startZ = Mathf.FloorToInt(startShifted.z / voxelSize);
+
+        // Check bounds
+        if (!IsInsideGrid(startX, startY, startZ))
+            return;
+
+        // Calculate the ray direction in voxel coordinates
+        Vector3 rayDir = (end - start).normalized;
+
+        // Direction steps
+        int stepX = (rayDir.x > 0) ? 1 : -1;
+        int stepY = (rayDir.y > 0) ? 1 : -1;
+        int stepZ = (rayDir.z > 0) ? 1 : -1;
+
+        // Next boundary planes
+        float tMaxX = VoxelBoundaryIntersection(start.x, rayDir.x, gridMin.x, startX, stepX);
+        float tMaxY = VoxelBoundaryIntersection(start.y, rayDir.y, gridMin.y, startY, stepY);
+        float tMaxZ = VoxelBoundaryIntersection(start.z, rayDir.z, gridMin.z, startZ, stepZ);
+
+        // tDelta values
+        float tDeltaX = (voxelSize / Mathf.Abs(rayDir.x));
+        float tDeltaY = (voxelSize / Mathf.Abs(rayDir.y));
+        float tDeltaZ = (voxelSize / Mathf.Abs(rayDir.z));
+
+        int x = startX;
+        int y = startY;
+        int z = startZ;
+
+        // Traverse until we go out of bounds or hit the end
+        while (IsInsideGrid(x, y, z))
+        {
+            // Clear density of current voxel
+            int index = x * (gridSizeY * gridSizeZ) + y * gridSizeZ + z;
+            voxels[index].density = 0.0f;
+
+            // Move to next voxel
+            if (tMaxX < tMaxY)
+            {
+                if (tMaxX < tMaxZ)
+                {
+                    x += stepX;
+                    tMaxX += tDeltaX;
+                }
+                else
+                {
+                    z += stepZ;
+                    tMaxZ += tDeltaZ;
+                }
+            }
+            else
+            {
+                if (tMaxY < tMaxZ)
+                {
+                    y += stepY;
+                    tMaxY += tDeltaY;
+                }
+                else
+                {
+                    z += stepZ;
+                    tMaxZ += tDeltaZ;
+                }
+            }
+
+            // Stop if we've passed the end point (optional optimization)
+            // Could check if distance along ray > (end - start).magnitude
+        }
+    }
+
+    bool IsInsideGrid(int x, int y, int z)
+    {
+        return (x >= 0 && x < gridSizeX &&
+                y >= 0 && y < gridSizeY &&
+                z >= 0 && z < gridSizeZ);
+    }
+
+    float VoxelBoundaryIntersection(float startCoord, float dir, float gridOrigin, int voxelIndex, int step)
+    {
+        float boundary = gridOrigin + (voxelIndex + (step > 0 ? 1 : 0)) * voxelSize;
+        return (dir != 0) ? (boundary - startCoord) / dir : float.MaxValue;
+    }
+
+    //Entry exit code AI Generated
+    bool RayBoxIntersection(Vector3 rayOrigin, Vector3 rayDir, Vector3 boxMin, Vector3 boxMax, out float tMin, out float tMax)
+    {
+        tMin = float.MinValue;
+        tMax = float.MaxValue;
+
+        for (int i = 0; i < 3; i++)
+        {
+            float invD = 1.0f / rayDir[i];
+            float t0 = (boxMin[i] - rayOrigin[i]) * invD;
+            float t1 = (boxMax[i] - rayOrigin[i]) * invD;
+
+            if (invD < 0.0f)
+            {
+                float temp = t0;
+                t0 = t1;
+                t1 = temp;
+            }
+
+            tMin = Mathf.Max(tMin, t0);
+            tMax = Mathf.Min(tMax, t1);
+
+            if (tMax < tMin)
+                return false;
+        }
+        return true;
+    }
+
 
     public ComputeBuffer GetVoxelBuffer()
     {

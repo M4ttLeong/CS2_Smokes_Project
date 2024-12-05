@@ -28,6 +28,12 @@ int _MaxSteps;
 float4 _SmokeColor;
 float _DensityFalloff;
 
+float4x4 _CameraViewMatrix;
+float4x4 _CameraProjectionMatrix;
+float4x4 _CameraInvProjectionMatrix;
+float4 _ProjectionParams; // x: near, y: far, z: far/(far-near), w: -far*near/(far-near)
+
+
 
 
 float SampleVoxelDensity(float3 pos)

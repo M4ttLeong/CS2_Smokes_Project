@@ -303,6 +303,7 @@ MonoBehaviour:
   maxSteps: 128
   densityFalloff: 0.5
   logInterval: 3
+  compositeMaterial: {fileID: 2100000, guid: 0440e079ebebdc049bc153d99b24cdff, type: 2}
 --- !u!1001 &388794648
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1658,7 +1659,7 @@ MonoBehaviour:
   smokeSourcePos: {x: 0, y: 0, z: 0}
   extentY: 8
   voxelSize: 0.5
-  smokeDisipationTimer: 2
+  smokeDisipationTimer: 5
   canCreateMultipleSmokes: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

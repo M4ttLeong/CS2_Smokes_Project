@@ -148,7 +148,7 @@ public class RayMarcher : MonoBehaviour
 
         WriteRayPositionsToFile(rayPositionBuffer);*/
 
-        WriteVoxelsToFile(voxelBuffer);
+        //WriteVoxelsToFile(voxelBuffer);
         //So above logging proves voxelBuffer is up to date
         //So voxelBuffer IS getting the density information when I create smoke
 
@@ -200,6 +200,7 @@ public class RayMarcher : MonoBehaviour
     }
 
 
+    /*
 
     //Drawing gizmos to simulate the rays that should be projected in the ray marcher shader
     void OnDrawGizmos()
@@ -256,7 +257,7 @@ public class RayMarcher : MonoBehaviour
                 }
             }
         }
-    }
+    }*/
     /*
     void OnDrawGizmos()
     {
