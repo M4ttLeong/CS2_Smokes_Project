@@ -6,7 +6,8 @@
 StructuredBuffer<float> _VoxelBuffer;
 RWTexture2D<float4> _RaymarchOutput;
 
-Texture2D<float> _SceneDepthTexture;
+//This will store the depth at which smoke was hit, will be needed to compare against the depth texture we get from the camera
+RWTexture2D<float> _SceneDepthTexture;
 SamplerState sampler_Depth;
 
 int _OutputWidth;
@@ -93,8 +94,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         
         if (voxelDensity > 0.0)
         {
-            _RaymarchOutput[id.xy] = float4(1.0, 1.0, 1.0, 1.0); // White color for a hit
-            return; // Exit the loop and shader
+            _RaymarchOutput[id.xy] = float4(_SmokeColor.rgb, 1.0f); // White color for a hit
+            //For the pixel, at what depth did we hit the smoke?
+            
+            //Get in eye/view space
+            //Why? Easier to compare against _CameraDepthTexture
+            float4 eyePos4 = mul(_CameraViewMatrix, float4(rayPos, 1.0));
+            float3 eyePos = eyePos4.xyz / eyePos4.w;
+            _SceneDepthTexture[id.xy] = -eyePos.z;
+            return; // Exit the loop 
         }
         
         /*
@@ -112,6 +120,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     _RaymarchOutput[id.xy] = float4(color, 0.0);
+    
+    //We didn't hit any smoke, so the depth should be marked as 0 to note that
+    _SceneDepthTexture[id.xy] = 0.0;
     // Write the final color and opacity to the output
     //_RaymarchOutput[id.xy] = float4(color, saturate(density));
     

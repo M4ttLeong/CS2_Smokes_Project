@@ -46,7 +46,8 @@ public class RayMarcher : MonoBehaviour
         raymarchOutput.Create();
 
         
-        depthTexture = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.Depth);
+        depthTexture = new RenderTexture(Screen.width, Screen.height, 24, RenderTextureFormat.RFloat);
+        depthTexture.enableRandomWrite = true;
         depthTexture.Create();
 
         depthMaterial = new Material(Shader.Find("Hidden/CopyDepth"));
@@ -57,6 +58,8 @@ public class RayMarcher : MonoBehaviour
         depthCommandBuffer.Blit(null, depthTexture, depthMaterial);
 
         cam.AddCommandBuffer(CameraEvent.AfterDepthTexture, depthCommandBuffer);
+
+        cam.depthTextureMode = DepthTextureMode.Depth;
     }
 
     void WriteVoxelsToFile(ComputeBuffer voxelBuffer)
@@ -192,8 +195,11 @@ public class RayMarcher : MonoBehaviour
 
         //Graphics.Blit(raymarchOutput, destination);
         //New code
+        //This is currently not depth aware
         compositeMaterial.SetTexture("_MainTex", source);
         compositeMaterial.SetTexture("_SmokeTex", raymarchOutput);
+        compositeMaterial.SetTexture("_SmokeDepthTex", depthTexture);
+        
 
         // Blit using the composite material
         Graphics.Blit(source, destination, compositeMaterial);

@@ -122,7 +122,8 @@ public class Voxelizer : MonoBehaviour
                     smokeOnScreen = true;
                 }
 
-                drawSmokeVoxels();
+                
+                //drawSmokeVoxels();
             }
             
         }
@@ -229,6 +230,7 @@ public class Voxelizer : MonoBehaviour
         return colliders.Length > 0;
     }
 
+    //This method is only here to help me visualize voxels in scene
     void drawSmokeVoxels()
     {
         if (voxelList != null && voxelBuffer != null)
