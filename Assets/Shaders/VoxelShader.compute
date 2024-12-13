@@ -40,6 +40,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         float3 voxelPos = voxel.pos;
         float distance = length(voxelPos - smokeSourcePos);
     
+        //Simple function to just set the density of cube of smoke to be bigger the closer it is to the source from 0-1
         float densityChange = saturate(1.0 - (distance / growthSpeed));
         voxel.density = min(voxel.density + densityChange, 1.0);
     

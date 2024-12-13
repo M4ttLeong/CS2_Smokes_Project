@@ -4,6 +4,7 @@ using System.IO;
 using Unity.Mathematics;
 using UnityEngine.Rendering;
 
+//RAYMARCHER CLASS CONCEPT CAME FROM ACEROLA's video https://www.youtube.com/watch?v=ryB8hT5TMSg&t=1159s
 public class RayMarcher : MonoBehaviour
 {
     public ComputeShader raymarchShader;
@@ -28,8 +29,6 @@ public class RayMarcher : MonoBehaviour
 
     public Material compositeMaterial;
     private RenderTexture depthTexture;
-    private Material depthMaterial;
-    private CommandBuffer depthCommandBuffer;
 
     private void OnEnable()
     {
@@ -50,14 +49,6 @@ public class RayMarcher : MonoBehaviour
         depthTexture.enableRandomWrite = true;
         depthTexture.Create();
 
-        depthMaterial = new Material(Shader.Find("Hidden/CopyDepth"));
-
-        // Set up the command buffer
-        depthCommandBuffer = new CommandBuffer();
-        depthCommandBuffer.name = "Copy Depth Texture";
-        depthCommandBuffer.Blit(null, depthTexture, depthMaterial);
-
-        cam.AddCommandBuffer(CameraEvent.AfterDepthTexture, depthCommandBuffer);
 
         cam.depthTextureMode = DepthTextureMode.Depth;
     }
@@ -164,7 +155,6 @@ public class RayMarcher : MonoBehaviour
 
         // Smoke properties
         raymarchShader.SetVector("_SmokeColor", smokeColor);
-        raymarchShader.SetFloat("_DensityFalloff", densityFalloff);
 
         raymarchShader.SetTexture(kernelHandle, "_RaymarchOutput", raymarchOutput);
 
@@ -175,16 +165,6 @@ public class RayMarcher : MonoBehaviour
 
         Matrix4x4 invProjMatrix = projMatrix.inverse;
         raymarchShader.SetMatrix("_CameraInvProjectionMatrix", invProjMatrix);
-        Vector4 projectionParams = new Vector4(
-            cam.nearClipPlane,
-            cam.farClipPlane,
-            cam.farClipPlane / (cam.farClipPlane - cam.nearClipPlane),
-            (-cam.farClipPlane * cam.nearClipPlane) / (cam.farClipPlane - cam.nearClipPlane)
-        );
-        raymarchShader.SetVector("_ProjectionParams", projectionParams);
-
-
-
 
         raymarchShader.SetInt("_OutputWidth", raymarchOutput.width);
         raymarchShader.SetInt("_OutputHeight", raymarchOutput.height);
@@ -195,7 +175,6 @@ public class RayMarcher : MonoBehaviour
 
         //Graphics.Blit(raymarchOutput, destination);
         //New code
-        //This is currently not depth aware
         compositeMaterial.SetTexture("_MainTex", source);
         compositeMaterial.SetTexture("_SmokeTex", raymarchOutput);
         compositeMaterial.SetTexture("_SmokeDepthTex", depthTexture);
@@ -204,8 +183,6 @@ public class RayMarcher : MonoBehaviour
         // Blit using the composite material
         Graphics.Blit(source, destination, compositeMaterial);
     }
-
-
     /*
 
     //Drawing gizmos to simulate the rays that should be projected in the ray marcher shader

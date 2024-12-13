@@ -6,7 +6,7 @@ using System.Threading;
 using UnityEngine.UIElements;
 using Unity.VisualScripting;
 
-
+//VOXELIZER CLASS CONCEPT COME FROM ACEROLA's video https://www.youtube.com/watch?v=ryB8hT5TMSg&t=1159s
 public class Voxelizer : MonoBehaviour
 {
     public ComputeShader voxelShader;
@@ -57,7 +57,6 @@ public class Voxelizer : MonoBehaviour
 
         extentX = renderer.bounds.extents.x;
         extentZ = renderer.bounds.extents.z;
-        //I guess all of this can go in the start really, no updates needed
 
         //Get the corners of the AABB
         //To note, imagine the origin is at the bottom plane of the AABB
@@ -87,19 +86,7 @@ public class Voxelizer : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        /*
-        int kernelHandle = voxelShader.FindKernel("CSMain");
-        voxelShader.SetVector("smokeSourcePos", smokeSourcePos);
-
-        voxelShader.Dispatch(kernelHandle,
-            Mathf.CeilToInt(gridSizeX / 8.0f),
-            Mathf.CeilToInt(gridSizeY / 8.0f),
-            Mathf.CeilToInt(gridSizeZ / 1.0f));
-        */
-
-        //drawSmokeVoxels();
         
-        //timer to control when we clear the smoke
         timer += Time.deltaTime;
 
         if (Input.GetMouseButtonDown(0))
@@ -136,9 +123,6 @@ public class Voxelizer : MonoBehaviour
                 FireRayAndClearVoxels();
             }
         }
-
-        Debug.Log("drawing line");
-        Debug.DrawLine(start, end, Color.red);
 
         if (timer >= smokeDisipationTimer) 
         {
@@ -297,7 +281,7 @@ public class Voxelizer : MonoBehaviour
         voxelBuffer.SetData(voxels);
     }
 
-    //AI generated function
+    //ClearVoxelsAlongRay AI generated
     void ClearVoxelsAlongRay(Vector3 start, Vector3 end, Voxel[] voxels)
     {
         // Convert start/end world positions to voxel coordinates
@@ -384,13 +368,14 @@ public class Voxelizer : MonoBehaviour
                 z >= 0 && z < gridSizeZ);
     }
 
+    //VoxelBoundaryIntersection AI Generated
     float VoxelBoundaryIntersection(float startCoord, float dir, float gridOrigin, int voxelIndex, int step)
     {
         float boundary = gridOrigin + (voxelIndex + (step > 0 ? 1 : 0)) * voxelSize;
         return (dir != 0) ? (boundary - startCoord) / dir : float.MaxValue;
     }
 
-    //Entry exit code AI Generated
+    //RayBoxIntersection AI Generated
     bool RayBoxIntersection(Vector3 rayOrigin, Vector3 rayDir, Vector3 boxMin, Vector3 boxMax, out float tMin, out float tMax)
     {
         tMin = float.MinValue;
@@ -442,10 +427,10 @@ public class Voxelizer : MonoBehaviour
         int y = Mathf.FloorToInt(shiftedPos.y / voxelSize);
         int z = Mathf.FloorToInt(shiftedPos.z / voxelSize);
 
-        // Bounds check
+        
         if (x < 0 || y < 0 || z < 0 || x >= gridSizeX || y >= gridSizeY || z >= gridSizeZ)
         {
-            return 0.0f; // Out of bounds
+            return 0.0f; 
         }
 
         // Calculate the 1D index of the voxel in the buffer

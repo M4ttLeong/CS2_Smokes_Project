@@ -27,17 +27,15 @@ int _MaxSteps;
 
 // Smoke properties
 float4 _SmokeColor;
-float _DensityFalloff;
 
 float4x4 _CameraViewMatrix;
 float4x4 _CameraProjectionMatrix;
 float4x4 _CameraInvProjectionMatrix;
-float4 _ProjectionParams; // x: near, y: far, z: far/(far-near), w: -far*near/(far-near)
 
 
 
 
-float SampleVoxelDensity(float3 pos)
+float GetVoxelDensity(float3 pos)
 {
     float3 minXYZ = float3(-1 * _GridSizeX / 4, 0, -1 * _GridSizeZ / 4);
     float3 shiftedPos = pos - minXYZ;
@@ -53,13 +51,82 @@ float SampleVoxelDensity(float3 pos)
     int index = gridPos.x * (_GridSizeY * _GridSizeZ) + gridPos.y * _GridSizeZ + gridPos.z;
 
     return _VoxelBuffer[index * 5 + 3]; //Access the 4th float of the buffer DENSITY
-    //return 1.0;
 }
 
-//Method is only to test that a texture can be written back
-float rand(float2 co)
+//https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html
+bool RayAABBIntersection(float3 rayOrigin, float3 rayDir, float3 minXYZ, float3 maxXYZ, out float tMin, out float tMax)
 {
-    return frac(sin(dot(co, float2(12.9898, 78.233))) * 43758.5453);
+    //x values
+    float tXMin = (minXYZ[0] - rayOrigin[0]) / rayDir[0];
+    float tXMax = (maxXYZ[0] - rayOrigin[0]) / rayDir[0];
+    
+    if (tXMin > tXMax)
+    {
+        float copy = tXMin;
+        tXMin = tXMax;
+        tXMax = copy;
+    }
+    
+    //y values
+    float tYMin = (minXYZ[1] - rayOrigin[1]) / rayDir[1];
+    float tYMax = (maxXYZ[1] - rayOrigin[1]) / rayDir[1];
+    
+    if (tYMin > tYMax)
+    {
+        float copy = tYMin;
+        tYMin = tYMax;
+        tYMax = copy;
+    }
+    
+    if ((tXMin > tYMax) || (tYMin > tXMax))
+        return false;
+    
+    if (tYMin > tXMin)
+    {
+        tMin = tYMin;
+    }
+    else
+    {
+        tMin = tXMin;
+    }
+    
+    if (tYMax < tXMax)
+    {
+        tMax = tYMax;
+    }
+    else
+    {
+        tMax = tXMax;
+    }
+
+    //z values
+    float tZMin = (minXYZ[2] - rayOrigin[2]) / rayDir[2];
+    float tZMax = (maxXYZ[2] - rayOrigin[2]) / rayDir[2];
+    
+    if (tZMin > tZMax)
+    {
+        float copy = tZMin;
+        tZMin = tZMax;
+        tZMax = copy;
+    }
+    
+    if ((tMin > tZMax) || (tZMin > tMax))
+    {
+        return false;
+    }
+    
+    if (tZMin > tMin)
+    {
+        tMin = tZMin;
+    }
+    
+    if (tZMax < tMax)
+    {
+        tMax = tZMax;
+    }
+    
+    return true;
+    
 }
 
 [numthreads(8, 8, 1)]
@@ -68,12 +135,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     // TODO: insert actual code here!
 
     // Get screen-space UV coordinates, normalized position of pixel on the screen
+    //Normalize pixel into [0,1] range
     float2 uv = id.xy / float2(_OutputWidth, _OutputHeight);
 
     // Create a ray for the current pixel
     float4 clipPos = float4(uv * 2 - 1, 1, 1);
     float4 worldPos = mul(_CameraInvViewProjection, clipPos);
-    //This killed me and I have no idea why
     worldPos /= worldPos.w; // Perspective divide
     float3 rayDir = normalize(worldPos.xyz - _CameraWorldPos);
     
@@ -83,18 +150,23 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 color = float3(0.0, 0.0, 0.0); // Default black color
     float density = 0.0;
 
+    //Can we optimize the ray march?
+    //Instead of stepping through some amount of arbitrary steps
+    //What if we take the first voxel we enter in the grid and the last voxel we enter in the grid
+    //Then using voxel grid coordinates, we draw a line via Bresenham's algo
+    //While drawing that line if we hit a voxel with smoke color the pixel
     for (int step = 0; step < _MaxSteps; step++)
     {
+        //Very simple ray march, once we hit a voxel with density color it the smoke color
         // Move along the ray
         rayPos += rayDir * _StepSize;
         
-
         // Sample voxel density
-        float voxelDensity = SampleVoxelDensity(rayPos);
+        float voxelDensity = GetVoxelDensity(rayPos);
         
         if (voxelDensity > 0.0)
         {
-            _RaymarchOutput[id.xy] = float4(_SmokeColor.rgb, 1.0f); // White color for a hit
+            _RaymarchOutput[id.xy] = float4(_SmokeColor.rgb, 1.0f); 
             //For the pixel, at what depth did we hit the smoke?
             
             //Get in eye/view space
@@ -104,27 +176,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
             _SceneDepthTexture[id.xy] = -eyePos.z;
             return; // Exit the loop 
         }
-        
-        /*
-        float voxelDensity = SampleVoxelDensity(rayPos);
-
-        // Accumulate density and color
-        density += voxelDensity * exp(-_DensityFalloff * length(rayPos - _CameraWorldPos));
-        color += voxelDensity * _SmokeColor.rgb;
-
-        // Early exit for high opacity
-        if (density > 1.0)
-        {
-            break;
-        }*/
     }
 
     _RaymarchOutput[id.xy] = float4(color, 0.0);
     
     //We didn't hit any smoke, so the depth should be marked as 0 to note that
     _SceneDepthTexture[id.xy] = 0.0;
-    // Write the final color and opacity to the output
-    //_RaymarchOutput[id.xy] = float4(color, saturate(density));
     
     //TEST LINE TO CHECK RAYMARCH OUTPUT TEXTURE
     //_RaymarchOutput[id.xy] = float4(rand(id.xy), rand(id.xy + 1), rand(id.xy + 2), 1.0);
